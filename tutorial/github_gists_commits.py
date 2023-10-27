@@ -20,6 +20,7 @@ def acquisition_gists_commits(**kwargs):
     warehouse_sql_query = """
         SELECT id, commits_url 
         FROM consolidate.consolidate_gists
+        LIMIT 500;
     """
 
     warehouse_data = select_data_from_query(sql_query=warehouse_sql_query)
@@ -58,7 +59,8 @@ def consolidate_gists_commits_data(**kwargs):
         item.pop("user")
     
     df = pd.json_normalize(gists_commits_data)
-    
+    df.drop_duplicates(subset=["id_gist", "version"], inplace=True)
+
     columns_name = ["version", "id_gist", "committed_at", "url", '"change_status.deletions"', '"change_status.additions"', '"change_status.total"']
     
     insert_df_in_warehouse(
@@ -66,6 +68,6 @@ def consolidate_gists_commits_data(**kwargs):
         "consolidate_gist_commits",
         "consolidate",
         columns=columns_name,
-        on_conflict_key=["id_gist", "version"], 
+        on_conflict_key=["version", "id_gist"], 
         on_conflict_update=["change_status.deletions","change_status.additions", "change_status.total"]
     )
