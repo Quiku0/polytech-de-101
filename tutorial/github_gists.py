@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 import pandas as pd
 from dagster import asset, get_dagster_logger
@@ -20,19 +21,22 @@ def acquisition_gists(**kwargs):
         logger.info(f"Trying to fetch page {i}")
         response = run_github_rest_query(endpoint="gists/public", params={"page": i, "per_page": 100})
         data = data + response.json()
-    
+
+    now = datetime.today()
     push_data_to_datalake(
         data=json.dumps(data),
         bucket_name="datalake-polytech-de-101",
-        file_key="kevinl/acquisition/gists/gists_2023_10_10.json"
+        file_key=f"maxenceb/acquisition/gists/gists_{now.year}_{now.month}_{now.day}.json"
     )
 
 
 @asset(deps=[acquisition_gists])
 def consolidate_gists_files_data(**kwargs):
+    now = datetime.today()
+    
     raw_data = pull_data_from_datalake(
         bucket_name="datalake-polytech-de-101",
-        file_key="kevinl/acquisition/gists/gists_2023_10_10.json"
+        file_key=f"maxenceb/acquisition/gists/gists_{now.year}_{now.month}_{now.day}.json"
     )
 
     gists_data = json.loads(raw_data)
@@ -59,9 +63,11 @@ def consolidate_gists_files_data(**kwargs):
 
 @asset(deps=[acquisition_gists])
 def consolidate_gists_data(**kwargs):
+    now = datetime.today()
+    
     raw_data = pull_data_from_datalake(
         bucket_name="datalake-polytech-de-101",
-        file_key="kevinl/acquisition/gists/gists_2023_10_10.json"
+        file_key=f"maxenceb/acquisition/gists/gists_{now.year}_{now.month}_{now.day}.json"
     )
     
     gists_data = json.loads(raw_data)

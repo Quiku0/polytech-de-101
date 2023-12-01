@@ -41,21 +41,22 @@ def acquisition_gists_commits(**kwargs):
     push_data_to_datalake(
         data=json.dumps(data),
         bucket_name="datalake-polytech-de-101",
-        file_key=f"kevinl/acquisition/gists_commits/gist_commits_{now.year}_{now.month}_{now.day}.json"
+        file_key=f"maxenceb/acquisition/gists_commits/gist_commits_{now.year}_{now.month}_{now.day}.json"
     )
 
 
 @asset(deps=[acquisition_gists_commits])
 def consolidate_gists_commits_data(**kwargs):
     now = datetime.today()
-
+    #logger = get_dagster_logger("acquisition_gists_commits")
     raw_data = pull_data_from_datalake(
         bucket_name="datalake-polytech-de-101",
-        file_key=f"kevinl/acquisition/gists_commits/gist_commits_{now.year}_{now.month}_{now.day}.json"
+        file_key=f"maxenceb/acquisition/gists_commits/gist_commits_{now.year}_{now.month}_{now.day}.json"
     )
 
     gists_commits_data = json.loads(raw_data)
     for item in gists_commits_data:
+        #logger.info(f"{item}")
         item.pop("user")
     
     df = pd.json_normalize(gists_commits_data)
